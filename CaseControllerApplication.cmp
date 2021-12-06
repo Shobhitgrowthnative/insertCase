@@ -1,0 +1,235 @@
+<aura:component controller="dynamicPicklist" implements="flexipage:availableForAllPageTypes,force:appHostable,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global">
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="selectedValue" type ="String[]" />
+    <aura:attribute name="selectedObject" type="String"/>
+    <aura:attribute name="selectedPicklist" type="String"/>
+    <aura:attribute name="selectedPicklistVals" type="String[]"/>
+    <aura:attribute name="optionone" type="String"/>
+    <aura:attribute name="optiontwo" type="String"/>
+    <aura:attribute name="truthy" type="boolean"/>
+    
+    <aura:attribute name="picklistdata" type="String[]" />
+    <aura:attribute name="picklistVals" type="List" default="[]"/>
+    
+    <aura:attribute name="myalltasks" type="TrackingAnalytics__c[]"/>
+    <aura:attribute name="allDatas" type="TrackingAnalytics__c[]" />
+    
+    <aura:attribute name="allData" type="List"/>
+    <aura:attribute name="currentPageNumber" type="Integer" default="1"/>
+    <aura:attribute name="pageSize" type="Integer" default="5"/>
+    <aura:attribute name="totalPages" type="Integer" default="0"/>
+    <aura:attribute name="pageList" type="List"/>
+  
+    <div class="demo-only demo-only--sizing slds-grid slds-wrap" style="background: white;">
+        <div class="slds-size_1-of-3">
+            <div class="slds-notify slds-notify_alert slds-alert_error" role="alert" aura:id="erroralert">
+                <span class="slds-assistive-text">error</span>
+                <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small" title="Description of icon when needed">
+                    <lightning:icon iconName="action:error" alternativeText="error" size="xx-small" title="error"/>
+                </span>
+                <h2> please select a valid value to proceed..
+                </h2>
+                <div class="slds-notify__close" onclick="{!c.geterror}">
+                    <button class="slds-button slds-button_icon slds-button_icon-small slds-button_icon-inverse" title="Close">
+                        <lightning:icon iconName="action:close" alternativeText="close" size="xx-small" title="close"/>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="demo-only" style="height:4rem" aura:id="update">
+                <div class="slds-notify_container slds-is-relative">
+                    <div class="slds-notify slds-notify_toast slds-theme_success" role="status">
+                        <span class="slds-assistive-text">success</span>
+                        <span class="slds-icon_container slds-icon-utility-success slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                            <lightning:icon iconName="action:success" alternativeText="success" size="xx-small" title="success"/>
+                        </span>
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small ">successfully updated ..</h2>
+                        </div>
+                        <div class="slds-notify__close" onclick="{!c.getupdate}">
+                            <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close">
+                                <lightning:icon iconName="action:close" alternativeText="close" size="xx-small" title="close"/>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-box slds-box_x-small slds-text-align_center slds-m-around_x-small">  
+                <article class="slds-card">
+                    <div class="slds-card__header slds-grid">
+                        <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                            <div class="slds-media__figure">
+                            </div>
+                            <div class="slds-media__body">
+                                <h2 >
+                                    <a href="#" class="slds-card__header-link slds-truncate" title="PickListSelector">
+                                        <span>Select the object</span>
+                                    </a>
+                                </h2>
+                                <ui:inputSelect  aura:id="ObjectsStore" class="slds-select" change="{!c.onObjectChange}"/>
+                            </div>
+                            <div>
+                                
+                            </div>
+                        </header>
+                    </div>
+                </article>
+                <br></br>
+                <div> <!--aura:id="changeIt"-->
+                    <lightning:select label="picklist type fields" onchange="{!c.onPicklistChange}" aura:id="picklistchange">
+                        <aura:if isTrue="{!v.truthy}">
+                            <option value="1">--None--</option>
+                        </aura:if>
+                        
+                        <aura:iteration items="{!v.picklistdata}" var="val">
+                            <option value="{!val}" required="true"> {!val}</option>
+                        </aura:iteration>
+                    </lightning:select> 
+                </div>
+                
+                <br></br>
+                <div>
+                    <lightning:dualListbox aura:id="selectGenre"
+                                           name="Genre"
+                                           label="Select Values"
+                                           sourceLabel="Available Values"
+                                           selectedLabel="Selected Value"
+                                           options="{!v.picklistVals}"
+                                           value="{!v.selectedPicklistVals}"
+                                           />
+                    <br/>
+                    <div>
+                        <div aura:id="saveIt" style="float:left;">
+                            <lightning:button variant="brand" label="Save" onclick="{!c.handleClick}" />
+                        </div>
+                        <div aura:id="updateIt" style="float:left;">
+                            <lightning:button variant="brand" label="Update" onclick="{!c.handleUpdateClick}" />
+                        </div>
+                        <div aura:id="clearIt" style="float:right;">
+                            <lightning:button variant="brand" label="Clear" onclick="{!c.doInit}" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-size_2-of-3">
+            <div class="slds-box slds-box_x-small slds-text-align_center slds-m-around_x-small">  
+                <div style="margin:20px;">
+                    <ui:inputSelect aura:id="records" change="{!c.onSelectChange}">
+                        <ui:inputSelectOption text="5" value="5"/>
+                        <ui:inputSelectOption text="10" value="10"/>
+                        <ui:inputSelectOption text="20" value="20"/>
+                        <ui:inputSelectOption text="30" value="30"/>
+                    </ui:inputSelect>
+                    <ui:inputText aura:id="input1"   change="{!c.searchKeyChange}" label='Search the name'  required="true"></ui:inputText>
+                </div>
+                
+                <table class="slds-table slds-table_cell-buffer" aria-label="Table of saved data">
+                    <thead>
+                        <tr class="slds-line-height_reset" style="margin:20px;">
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Edit"></div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Name">Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="sObject Name">sObject Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="sObject API Name">sObject API Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Picklist API Name">Picklist API Name</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Selected Values">Selected Values</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="del"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <aura:iteration items="{!v.myalltasks}" var="task" ><!-- iteration account record.-->
+                            <tr class="slds-hint-parent">                       
+                                <aura:renderIf isTrue="{!task.Name}">
+                                    <td data-label="Account Name">
+                                        <div class="slds-truncate" onclick="{!c.getEditClick}" data-sfid="{!task.Name}">
+                                            <lightning:icon iconName="action:edit" alternativeText="Edit" size="xx-small" title="Edit" />
+                                        </div>
+                                    </td>
+                                    <td data-label="Account Name" data-sfid="{!task.sObject_API_Name__c}">
+                                        
+                                        <div class="slds-truncate"   aura:id="currentBoatTypeChoice" disabled="{!task.Name == null}" title="{!task.Name}">{!task.Name}</div>
+                                    </td>
+                                    <td data-label="sObject_Name__c">
+                                        <div class="slds-truncate" title="{!task.sObject_Name__c}">{!task.sObject_Name__c}</div>
+                                    </td>
+                                    <td data-label="sObject_API_Name__c">
+                                        <div class="slds-truncate" title="{!task.sObject_API_Name__c}">{!task.sObject_API_Name__c}</div>
+                                    </td>
+                                    <td data-label="Picklist_API_Name__c">
+                                        <div class="slds-truncate" title="{!task.Picklist_API_Name__c}">{!task.Picklist_API_Name__c}</div>
+                                    </td>
+                                    <td data-label="Selected_Values__c">
+                                        <div class="slds-truncate" title="{!task.Selected_Values__c}">{!task.Selected_Values__c}</div>
+                                    </td>
+                                    <td data-label="del">
+                                        <div class="slds-truncate" title="delete" onclick="{!c.getClick}" data-sfid="{!task.Name}">
+                                            <lightning:icon iconName="action:delete" alternativeText="Delete" size="xx-small" title="Delete" />
+                                        </div>
+                                    </td>
+                                    <aura:set attribute="else"> 
+                                    </aura:set>
+                                </aura:renderIf>                        
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+                <div style="margin:20px; display: inline-flex;">
+                    
+                    <lightning:layoutItem padding="around-small" flexibility="auto">
+                        <lightning:button label="First" iconName="utility:left" iconPosition="left"
+                                          onclick="{!c.onFirst}" disabled="{! v.currentPageNumber == 1}"/>
+                        <lightning:button iconName="utility:chevronleft" iconPosition="left"
+                                          onclick="{!c.onPrev}" disabled="{! v.currentPageNumber == 1}"/>
+                        <span class="slds-p-horizontal_x-small">
+                            <a onclick="{!c.processMe}" name="1" 
+                               class="{! (v.currentPageNumber == 1) ? 'selected' : ''}">1</a>
+                        </span>
+                        <span class="slds-p-horizontal_xxx-small">
+                            <a></a>
+                        </span>
+                        
+                        <aura:iteration items="{!v.pageList}" var="item">
+                            <span class="slds-p-horizontal_x-small" >
+                                <a onclick="{!c.processMe}" name="{!item}"
+                                   class="{! (v.currentPageNumber == item) ? 'selected' : ''}">{!item}</a>
+                            </span>
+                        </aura:iteration>
+                        
+                        <span class="slds-p-horizontal_xxx-small">
+                            <a>...</a>
+                        </span>
+                        <span class="slds-p-horizontal_x-small">
+                            <a onclick="{!c.processMe}" name="{!v.totalPages}"
+                               class="{! (v.currentPageNumber == v.totalPages) ? 'selected' : ''}">{!v.totalPages}</a>
+                        </span>
+                        <lightning:button iconName="utility:chevronright" iconPosition="right" 
+                                          disabled="{! v.currentPageNumber == v.totalPages}" onclick="{!c.onNext}"/>
+                        <lightning:button label="Last" iconName="utility:right" iconPosition="right" 
+                                          disabled="{! v.currentPageNumber == v.totalPages}" onclick="{!c.onLast}"/>
+                    </lightning:layoutItem>
+                    
+                </div>
+                
+                
+                
+                
+            </div>
+        </div>
+    </div>
+</aura:component>

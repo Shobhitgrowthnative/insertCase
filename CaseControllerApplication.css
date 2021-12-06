@@ -1,0 +1,7 @@
+.THIS.custom-background {
+    background-color: white;
+}
+.THIS .changeMe {
+    display:none;
+    width:200px;
+}
